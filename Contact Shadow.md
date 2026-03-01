@@ -221,7 +221,15 @@ float CastScreenSpaceShadowRay(
 
 ![image-20260203144858332](pictures/image-20260203144858332.png)
 
+##### 3月1日 对照实验
 
+|                      | Default                                                      | Without Depth Adaptation                                     | Without Angle Adaptation                                     | With Depth And Angle~                                        |
+| -------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| Config               | ContactShadowLength<br />=0.02                               | ContactShadowLength<br />=0.02<br />AngleStepScale = 2<br />AngleThreshold = 1.0<br />NearScale = 3.0<br />NearThreshold = 1<br />MaxSteps = 32 | ContactShadowLength<br />=0.02<br />AngleStepScale = 2<br />AngleThreshold = -1.0<br />NearScale = 3.0<br />NearThreshold = 1000<br />MaxSteps = 32 | ContactShadowLength<br />=0.02<br />AngleStepScale = 2<br />AngleThreshold = 1.0<br />NearScale = 3.0<br />NearThreshold = 1000<br />MaxSteps = 32 |
+| Performance Cost(ms) | 0.05                                                         | 0.07                                                         | 0.08                                                         | 0.09                                                         |
+| Light Pass(ms)       | 0.48                                                         | 0.50                                                         | 0.50                                                         | 0.53                                                         |
+| Effect Difference    | ![image-20260301235151847](pictures/image-20260301235151847.png) | ![image-20260301232123422](pictures/image-20260301232123422.png) | ![image-20260301231820934](pictures/image-20260301231820934.png) | ![image-20260301231656384](pictures/image-20260301231656384.png) |
+| Enlarged Image       | ![image-20260301235151847](pictures/image-20260301235151847-1772381721173-1.png) | ![image-20260301232123422](pictures/image-20260301232123422-1772381733285-3.png) | ![image-20260301231820934](pictures/image-20260301231820934-1772381742764-5.png) | ![image-20260301231656384](pictures/image-20260301231656384-1772381747158-7.png) |
 
 
 
