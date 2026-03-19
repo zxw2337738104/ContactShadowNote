@@ -48,9 +48,10 @@ MRT[4] = ( CustomData);
 
 <img src="pictures/image-20260226172747119.png" alt="image-20260226172747119" style="zoom: 67%;" />
 
-| ![7a6d4b7d79f073526e442a1f23adb731](pictures/7a6d4b7d79f073526e442a1f23adb731.jpg) | ![fadca7f1f4c3c14bdbbd1c0e0f152b8b](pictures/fadca7f1f4c3c14bdbbd1c0e0f152b8b.jpg) |
-| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| ![7a6d4b7d79f073526e442a1f23adb731](pictures/7a6d4b7d79f073526e442a1f23adb731.jpg) |      |
+| ------------------------------------------------------------ | ---- |
 
+![fadca7f1f4c3c14bdbbd1c0e0f152b8b](pictures/fadca7f1f4c3c14bdbbd1c0e0f152b8b.jpg)
 开启了ContactShadow：Normal.a = 0.33333
 
 未开启的物体：Normal.a = 0
@@ -59,7 +60,7 @@ MRT[4] = ( CustomData);
 
 **对正常接触阴影像素及其相邻的噪点Debug：**
 
-|                           正常Hit                            |                          未正常Hit                           |
+|                           正常Hit                            |                      未正常Hit（噪点）                       |
 | :----------------------------------------------------------: | :----------------------------------------------------------: |
 | ![image-20260226175913293](pictures/image-20260226175913293.png) | ![image-20260226175932967](pictures/image-20260226175932967.png) |
 
@@ -104,22 +105,15 @@ float CastScreenSpaceShadowRay(
     bool bHairNoShadowLight,           // 头发特殊光照处理标志
     out float2 HitUV)                  // 输出命中的屏幕UV
 {
-    // ===== 1. 将射线起点转换到裁剪空间 =====
+    
     float4 RayStartClip = mul(float4(RayOriginTranslatedWorld, 1), View.TranslatedWorldToClip);
-
-    // ===== 2. 计算射线终点，变换到裁剪空间 =====
     float4 RayDirClip = mul(float4(RayDirection * RayLength, 0), View.TranslatedWorldToClip);
-
     float4 RayEndClip = RayStartClip + RayDirClip;
 
-    // ===== 3. 透视除法，转换到 NDC 空间 =====
     float3 RayStartScreen = RayStartClip.xyz / RayStartClip.w;
     float3 RayEndScreen   = RayEndClip.xyz   / RayEndClip.w;
-
-    // ===== 4. 计算屏幕空间中的射线方向 =====
     float3 RayStepScreen = RayEndScreen - RayStartScreen;
 
-    // ===== 5. 转换到屏幕UV空间（0~1范围） =====
     float3 RayStartUVz = float3(
         RayStartScreen.xy * View.ScreenPositionScaleBias.xy + View.ScreenPositionScaleBias.wz,
         RayStartScreen.z
@@ -130,26 +124,26 @@ float CastScreenSpaceShadowRay(
         RayStepScreen.z
     );
 
-    // ===== 6. 将视空间 Z 方向上长度为 RayLength 的向量变换到 Clip 空间 =====
+    // 将视空间 Z 方向上长度为 RayLength 的向量变换到 Clip 空间
     float4 RayDepthClip = RayStartClip + mul(float4(0, 0, RayLength, 0), View.ViewToClip);
     float3 RayDepthScreen = RayDepthClip.xyz / RayDepthClip.w;
 
-    // ===== 7. 计算每一步的步长 =====
+    // 计算初始偏移和步长
     const float StepOffset = Dither - 0.5f; // 抖动偏移，减少带状伪影
     const float Step = 1.0 / NumSteps;      // 单次步进比例
 
-    // ===== 8. 计算深度比较容差 =====
+    // 计算深度比较容差
     // 容差随射线长度变化，避免远处误判
     const float CompareTolerance =
         abs(RayDepthScreen.z - RayStartScreen.z) * Step * CompareToleranceScale;
 
-    // ===== 9. 初始采样时间（带抖动）=====
+    // 初始采样时间（带抖动）
     float SampleTime = StepOffset * Step + Step;
 
-    // ===== 10. 获取起点像素的深度 =====
+    // 获取起点像素的深度
     const float StartDepth = LookupDeviceZ(RayStartUVz.xy);
 
-    // ===== 11. RayMarching 主循环 =====
+    // RayMarching 主循环
     UNROLL
     for (int i = 0; i < NumSteps; i++)
     {
@@ -159,8 +153,7 @@ float CastScreenSpaceShadowRay(
         // 从深度缓冲中读取当前像素深度
         float SampleDepth = LookupDeviceZ(SampleUVz.xy);
 
-        // ===== 避免自相交 =====
-        // 如果采样点深度等于起点深度，则说明仍在同一像素
+        // 避免自相交，如果采样点深度等于起点深度，则说明仍在同一像素
         // 头发特殊情况例外
         if (SampleDepth != StartDepth || bHairNoShadowLight)
         {
@@ -176,7 +169,7 @@ float CastScreenSpaceShadowRay(
                 // 输出命中的UV
                 HitUV = SampleUVz.xy;
 
-                // ===== 屏幕边界检查 =====
+                //   屏幕边界检查  
                 // 如果UV超出[0,1]，认为无效
                 bool bValidUV = all(and (0.0 < SampleUVz.xy, SampleUVz.xy < 1.0));
 
@@ -221,7 +214,7 @@ float CastScreenSpaceShadowRay(
 
 ![image-20260203144858332](pictures/image-20260203144858332.png)
 
-##### 3月1日 对照实验
+##### 3月1日 对照实验（4070S）
 
 |                      | Default                                                      | Default                                                      | Angle Adaptation                                             | Depth Adaptation                                             | Depth And Angle~                                             |
 | -------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -233,11 +226,19 @@ float CastScreenSpaceShadowRay(
 
 
 
+3.19
 
+|          |                           BendSSS                            |                       BendSSS+Default                        |                       BendSSS+Default                        |                           Default                            |                           Default                            |
+| :------: | :----------------------------------------------------------: | :----------------------------------------------------------: | :----------------------------------------------------------: | :----------------------------------------------------------: | :----------------------------------------------------------: |
+| 关键参数 | BendSSS..................................<br />Thickness  =  0.005f |       Default:<br /> CompareToleranceScale<br />= 0.5f       |       Default:<br /> CompareToleranceScale<br />= 2.0f       |       Default:<br /> CompareToleranceScale<br />= 0.5f       |       Default:<br /> CompareToleranceScale<br />= 2.0f       |
+|          | ![image-20260319143008087](pictures/image-20260319143008087.png) | ![image-20260319143139029](pictures/image-20260319143139029.png) | ![image-20260319143534165](pictures/image-20260319143534165.png) | ![image-20260319143742841](pictures/image-20260319143742841.png) | ![image-20260319143842050](pictures/image-20260319143842050.png) |
+|          | ![image-20260319143008087_cropped](pictures/image-20260319143008087_cropped.png) | ![image-20260319143139029_cropped](pictures/image-20260319143139029_cropped.png) | ![image-20260319143534165_cropped](pictures/image-20260319143534165_cropped.png) | ![image-20260319143742841_cropped](pictures/image-20260319143742841_cropped.png) | ![image-20260319143842050_cropped](pictures/image-20260319143842050_cropped.png) |
 
+BendSSS
 
+![f255438fda25ec60a766247e0df552cf](pictures/f255438fda25ec60a766247e0df552cf.png)
 
-
+默认SAMPLE_COUNT=60情况下中远场景中的树的阴影有比较不错的表现
 
 
 
