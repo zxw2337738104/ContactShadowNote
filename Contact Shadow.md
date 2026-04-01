@@ -279,12 +279,14 @@ BendSSS在场景中特定情况下会出现摩尔纹：
 
 对于提供的几种Debug图：
 
-			if (inParameters.DebugOutputEdgeMask)
-				result = is_edge ? 1 : 0;
-			if (inParameters.DebugOutputThreadIndex)
-				result = (inGroupThreadID / (float)WAVE_SIZE);
-			if (inParameters.DebugOutputWaveIndex)			
-				result = frac(inGroupID.x / (float)WAVE_SIZE);
+```c++
+if (inParameters.DebugOutputEdgeMask)
+    result = is_edge ? 1 : 0;
+if (inParameters.DebugOutputThreadIndex)
+    result = (inGroupThreadID / (float)WAVE_SIZE);
+if (inParameters.DebugOutputWaveIndex)			
+    result = frac(inGroupID.x / (float)WAVE_SIZE);
+```
 
 |                     DebugOutputEdgeMask                      |                    DebugOutputThreadIndex                    |                     DebugOutputWaveIndex                     |
 | :----------------------------------------------------------: | :----------------------------------------------------------: | :----------------------------------------------------------: |
